@@ -129,8 +129,9 @@ it("supports non-JSON schema inputs through explicit serialization", async () =>
 
 it("keeps emitter callbacks bound and resolves both type-map positions", () => {
 	const { extension } = setup(z.string().transform(Number));
-	const { renderInputType, renderOutputType } = extension.descriptor;
+	const { factory, renderInputType, renderOutputType } = extension.descriptor;
 	const params = extension.column("value").typeParams;
+	expect(factory(params)().decodeJson("36")).toBe(36);
 	expect(renderInputType(params)).toBe(
 		'ZodTypes["zod/json@1"]["schemas"]["value"]["input"]',
 	);

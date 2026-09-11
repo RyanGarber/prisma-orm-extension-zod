@@ -104,10 +104,10 @@ export class ZodDescriptor extends PostgresCodecDescriptor<ZodTypeParams> {
 		}
 		return binding;
 	}
-	override factory(params: ZodTypeParams) {
+	override readonly factory = (params: ZodTypeParams) => {
 		const binding = this.lookup(params);
 		return () => new ZodCodec(this, binding);
-	}
+	};
 	override readonly renderInputType = (params: ZodTypeParams) =>
 		this.render(params, "input");
 	override readonly renderOutputType = (params: ZodTypeParams) =>

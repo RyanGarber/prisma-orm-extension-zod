@@ -38,6 +38,25 @@ export function createZodExtension<
 		targetId: "postgres",
 		version: "0.1.0",
 		capabilities: {},
+		authoring: {
+			type: {
+				zod: {
+					Json: {
+						kind: "typeConstructor",
+						args: [{ kind: "string", name: "key" }],
+						output: {
+							codecId: ZOD_CODEC_ID,
+							nativeType: ZOD_NATIVE_TYPE,
+							typeParams: {
+								key: { kind: "arg", index: 0 },
+								module: reference.module,
+								export: reference.export,
+							},
+						},
+					},
+				},
+			},
+		},
 		types: {
 			codecTypes: {
 				codecDescriptors: [descriptor],
