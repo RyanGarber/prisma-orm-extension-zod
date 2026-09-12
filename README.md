@@ -148,21 +148,42 @@ The original schema is registered at runtime, rather than converted to JSON Sche
 
 Zod Classic and Mini types are accepted through `zod/v4/core`'s `$ZodType`. Query-time encode/decode support async schemas. Prisma's synchronous `encodeJson`/`decodeJson` hooks cannot run async schemas; these throw for async refinements/transforms, including when Prisma uses those hooks for nested JSON results or contract defaults. Use synchronous schemas for those paths.
 
-## Non-JSON inputs
+## JavaScript values beyond JSON
 
-Any Zod type can be registered, but its input still needs a database representation. The default serializer rejects lossy values such as `undefined`, `bigint`, dates, maps, non-finite numbers, cycles, and objects containing unsupported values. Provide synchronous serialization callbacks for these inputs:
+Standard data values are serialized automatically, at the column root or nested anywhere inside objects, arrays, `z.any()`, and `z.unknown()`. No callbacks are needed for `z.date()` or `temporal-zod`'s `zPlainDateTime` and `zPlainDateTimeInstance`:
 
 ```ts
-const DateSchema = z.date();
-const date = defineZodSchema(DateSchema, {
-  serialization: {
-    serialize: (value) => value.toISOString(),
-    deserialize: (json) => new Date(z.string().parse(json)),
-  },
-});
+const schemas = {
+  Date: defineZodSchema(z.date()),
+  ToolOutput: defineZodSchema(z.object({
+    createdAt: z.date(),
+    result: z.any(),
+  })),
+};
+// Write { createdAt: new Date(), result: new Map([["count", 42n]]) }.
+// Read back a Date, a Map, and a bigint, with their types preserved.
 ```
 
-Callbacks must round-trip the input faithfully. Their JSON output is checked and the deserialized input is validated before a write proceeds. Top-level optional/default schemas receiving `undefined` need a custom representation; object properties absent from the input can still receive defaults on reads. Prisma controls SQL NULL handling separately from Zod nullable schemas.
+Supported data includes:
+
+- JSON primitives, objects and arrays (including strings with NUL or lone UTF-16 surrogates); `undefined` (including explicit object fields), bigint, `NaN`, infinities, and negative zero.
+- Dates, maps, sets, regular expressions (including `lastIndex`), URLs, and URLSearchParams.
+- Standard Error subclasses and AggregateError, including stack, cause, errors, and own properties.
+- ArrayBuffer, DataView, ArrayBuffer-backed typed arrays supported by the runtime, and Node Buffer.
+- All eight Temporal types, restored through `ponyfill-temporal` without installing a global.
+- Boxed primitives, symbols and symbol keys, null-prototype objects, sparse arrays, and shared/circular references. Local symbols are recreated; repeated uses within the value retain identity. Global and well-known symbols retain their registered identity.
+
+Zod still controls which values a particular column accepts. For example, invalid dates can round-trip through `z.any()`, but `z.date()` rejects them. Recursive Zod schemas must themselves be able to validate the input; serialization does not make a recursive parser cycle-safe.
+
+Executable or runtime-bound values—functions, promises, weak collections/references, shared memory, arbitrary class instances, and unsupported host objects such as streams—are rejected with a value path. They cannot be restored automatically as working runtime resources. Object prototypes beyond the supported types, property descriptors, and extra properties attached to built-in containers are not a general object-persistence contract. Application classes or other custom representations can use synchronous `serialization.serialize` / `serialization.deserialize` callbacks.
+
+### Stored representation and compatibility
+
+Ordinary JSON retains its original JSONB shape. Values requiring type or reference information use a versioned `{ "$prismaZod": "devalue@1", "value": ... }` envelope backed by devalue. Both asynchronous and synchronous codec hooks restore the value before Zod validation; transforms still run in the forward direction only.
+
+Existing ordinary JSON rows remain readable. New inputs containing the reserved root `$prismaZod` key are escaped inside an envelope. Pre-existing rows using that root key as application data need migration or explicit serialization callbacks. Types already lost in old JSON (for example a Date previously saved as a string inside `z.any()`) cannot be inferred retroactively. Older extension versions cannot read the new rich format.
+
+SQL JSON-path operations on enveloped rows see the envelope, and equality compares the stored representation, including reference layout and collection order. Custom callbacks bypass the automatic envelope and continue to control their own JSON representation; their output is checked as JSON and their restored input is validated before saving. Prisma's SQL NULL and omitted-column handling remain separate from codec serialization of `null` and `undefined`.
 
 The driver must provide parsed JSONB values on reads, as the standard Postgres driver does. Raw JSON text is not guessed or automatically parsed, avoiding ambiguity for strings such as `"42"` or `"null"`.
 

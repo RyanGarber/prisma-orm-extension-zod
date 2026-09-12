@@ -2,7 +2,7 @@ import type { JsonValue } from "@prisma/orm-postgres/contract/types";
 import type { $ZodType, input } from "zod/v4/core";
 
 export interface SchemaOptions<S extends $ZodType> {
-	/** Required for non-JSON inputs; must round-trip the schema input. */
+	/** Override automatic serialization for application-specific representations. */
 	readonly serialization?: {
 		serialize(value: input<S>): JsonValue;
 		deserialize(value: JsonValue): input<S>;
@@ -20,45 +20,47 @@ export type ZodSchema<S extends $ZodType = $ZodType> = ReturnType<
 	typeof defineZodSchema<S>
 >;
 
-/** Reject lossy JSON conversions rather than silently dropping or changing data. */
+/** Strict JSON fast path. Repeated references and non-JSON values use the rich serializer. */
 export function jsonValue(
 	value: unknown,
-	ancestors = new Set<object>(),
+	seen = new Set<object>(),
+	preserveReferences = false,
 ): JsonValue {
-	if (value === null || typeof value === "string" || typeof value === "boolean")
+	if (value === null || typeof value === "boolean") return value;
+	if (typeof value === "string") {
+		jsonString(value);
 		return value;
+	}
 	if (
 		typeof value === "number" &&
 		Number.isFinite(value) &&
 		!Object.is(value, -0)
 	)
 		return value;
-	if (typeof value !== "object" || value === null)
-		throw new TypeError("Value requires custom JSON serialization");
-	if (ancestors.has(value))
-		throw new TypeError("Cyclic values cannot be stored as JSON");
-	ancestors.add(value);
+	if (typeof value !== "object") throw new TypeError("Not a JSON value");
+	if (seen.has(value)) throw new TypeError("Repeated reference");
+	seen.add(value);
 	try {
-		if (Array.isArray(value)) {
-			return Array.from(value, (item) => jsonValue(item, ancestors));
-		}
-		if (
-			Object.getPrototypeOf(value) !== Object.prototype &&
-			Object.getPrototypeOf(value) !== null
-		) {
-			throw new TypeError(
-				"Non-plain objects require custom JSON serialization",
+		if (Array.isArray(value))
+			return Array.from(value, (item) =>
+				jsonValue(item, seen, preserveReferences),
 			);
-		}
+		if (Object.getPrototypeOf(value) !== Object.prototype)
+			throw new TypeError("Not a plain JSON object");
 		if (Object.getOwnPropertySymbols(value).length)
-			throw new TypeError("Symbol keys cannot be stored as JSON");
+			throw new TypeError("Symbol keys");
 		return Object.fromEntries(
-			Object.entries(value).map(([key, item]) => [
-				key,
-				jsonValue(item, ancestors),
-			]),
+			Object.entries(value).map(([key, item]) => {
+				jsonString(key);
+				return [key, jsonValue(item, seen, preserveReferences)];
+			}),
 		);
 	} finally {
-		ancestors.delete(value);
+		if (!preserveReferences) seen.delete(value);
 	}
+}
+
+function jsonString(value: string) {
+	if (value.includes(String.fromCharCode(0)) || /[\uD800-\uDFFF]/u.test(value))
+		throw new TypeError("String requires a JSONB-safe representation");
 }

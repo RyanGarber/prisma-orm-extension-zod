@@ -81,34 +81,6 @@ it("supports Mini, unions, lazy schemas and defaults", async () => {
 	).resolves.toEqual({ name: "guest" });
 });
 
-it.each([
-	undefined,
-	NaN,
-	Infinity,
-	-0,
-	1n,
-	new Date(),
-	new Map(),
-	{ a: undefined },
-	[undefined],
-	Symbol("a"),
-	() => 1,
-])("rejects lossy JSON inputs %s", async (value) => {
-	await expect(setup(z.unknown()).codec.encode(value)).rejects.toThrow();
-});
-
-it("rejects cycles but permits shared objects", async () => {
-	const cycle: { self?: unknown } = {};
-	cycle.self = cycle;
-	await expect(setup(z.unknown()).codec.encode(cycle)).rejects.toThrow(
-		"Cyclic",
-	);
-	const a = { x: 1 };
-	await expect(setup(z.unknown()).codec.encode({ a, b: a })).resolves.toBe(
-		'{"a":{"x":1},"b":{"x":1}}',
-	);
-});
-
 it("supports non-JSON schema inputs through explicit serialization", async () => {
 	const binding = defineZodSchema(z.date(), {
 		serialization: {
@@ -178,4 +150,15 @@ it("rejects a serializer whose stored value fails validation", async () => {
 	)();
 	await expect(codec.encode(2)).rejects.toThrow();
 	expect(() => codec.encodeJson(2)).toThrow();
+});
+
+it("preserves explicit undefined object fields", async () => {
+	const { codec } = setup(
+		z.unknown().refine((v) => Object.hasOwn(v as object, "a")),
+	);
+	const value = { a: undefined };
+	expect(
+		await codec.decode(JSON.parse(await codec.encode(value))),
+	).toStrictEqual(value);
+	expect(codec.decodeJson(codec.encodeJson(value))).toStrictEqual(value);
 });

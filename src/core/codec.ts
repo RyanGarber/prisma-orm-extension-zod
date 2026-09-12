@@ -11,6 +11,7 @@ import {
 	parseAsync,
 } from "zod/v4/core";
 import { jsonValue, type ZodSchema } from "./schema";
+import { deserialize, serialize } from "./serialization";
 
 export const ZOD_CODEC_ID = "zod/json@1" as const;
 export const ZOD_NATIVE_TYPE = "jsonb" as const;
@@ -34,16 +35,14 @@ export class ZodCodec<S extends $ZodType> extends CodecImpl<
 		super(descriptor);
 	}
 	private serialize(value: input<S>): JsonValue {
-		return jsonValue(
-			this.binding.serialization
-				? this.binding.serialization.serialize(value)
-				: value,
-		);
+		return this.binding.serialization
+			? jsonValue(this.binding.serialization.serialize(value))
+			: serialize(value);
 	}
 	private deserialize(value: JsonValue): unknown {
 		return this.binding.serialization
 			? this.binding.serialization.deserialize(value)
-			: value;
+			: deserialize(value);
 	}
 	async encode(value: input<S>): Promise<string> {
 		await parseAsync(this.binding.schema, value);
