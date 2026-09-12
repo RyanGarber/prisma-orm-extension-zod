@@ -64,9 +64,7 @@ const values = [
 it.each(values.map((value, index) => ({ value, index })))(
 	"round-trips standard value $index at root and inside tool output",
 	async ({ value }) => {
-		for (const [schema, input] of [
-			[z.unknown(), value],
-		] as const) {
+		for (const [schema, input] of [[z.unknown(), value]] as const) {
 			const codec = codecFor(schema);
 			const expected = z.core.parse(schema, input);
 			expect(
