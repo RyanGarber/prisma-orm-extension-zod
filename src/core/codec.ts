@@ -2,6 +2,7 @@ import { CodecImpl } from "@prisma/orm-postgres/components/codec";
 import type { JsonValue } from "@prisma/orm-postgres/contract/types";
 import type { ProjectionExpr } from "@prisma/orm-postgres/relational-core/ast";
 import { PostgresCodecDescriptor } from "@prisma/orm-postgres/target/codec-descriptor";
+import { postgresCodecRegistry } from "@prisma/orm-postgres/target/codecs";
 import { z } from "zod";
 import {
 	type $ZodType,
@@ -10,8 +11,13 @@ import {
 	parse,
 	parseAsync,
 } from "zod/v4/core";
-import { jsonValue, type ZodSchema } from "./schema";
-import { deserialize, serialize } from "./serialization";
+import { hydrationSchema } from "./hydration";
+import type { ZodSchema } from "./schema";
+
+const jsonbDescriptor = postgresCodecRegistry.descriptorFor("pg/jsonb@1");
+if (!jsonbDescriptor)
+	throw new Error("Prisma PostgreSQL JSONB codec is unavailable");
+const jsonb = jsonbDescriptor.factory(undefined)({ name: "zod/json" });
 
 export const ZOD_CODEC_ID = "zod/json@1" as const;
 export const ZOD_NATIVE_TYPE = "jsonb" as const;
@@ -33,34 +39,22 @@ export class ZodCodec<S extends $ZodType> extends CodecImpl<
 		private readonly binding: ZodSchema<S>,
 	) {
 		super(descriptor);
+		this.readSchema = hydrationSchema(binding.schema);
 	}
-	private serialize(value: input<S>): JsonValue {
-		return this.binding.serialization
-			? jsonValue(this.binding.serialization.serialize(value))
-			: serialize(value);
-	}
-	private deserialize(value: JsonValue): unknown {
-		return this.binding.serialization
-			? this.binding.serialization.deserialize(value)
-			: deserialize(value);
-	}
+	private readonly readSchema: $ZodType;
 	async encode(value: input<S>): Promise<string> {
 		await parseAsync(this.binding.schema, value);
-		const json = this.serialize(value);
-		await parseAsync(this.binding.schema, this.deserialize(json));
-		return JSON.stringify(json);
+		return jsonb.encode(value, {}) as Promise<string>;
 	}
 	async decode(value: JsonValue): Promise<output<S>> {
-		return parseAsync(this.binding.schema, this.deserialize(value));
+		return parseAsync(this.readSchema, value) as Promise<output<S>>;
 	}
 	encodeJson(value: input<S>): JsonValue {
 		parse(this.binding.schema, value);
-		const json = this.serialize(value);
-		parse(this.binding.schema, this.deserialize(json));
-		return json;
+		return jsonb.encodeJson(value);
 	}
 	decodeJson(value: JsonValue): output<S> {
-		return parse(this.binding.schema, this.deserialize(value));
+		return parse(this.readSchema, value) as output<S>;
 	}
 }
 

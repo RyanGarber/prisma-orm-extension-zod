@@ -81,24 +81,6 @@ it("supports Mini, unions, lazy schemas and defaults", async () => {
 	).resolves.toEqual({ name: "guest" });
 });
 
-it("supports non-JSON schema inputs through explicit serialization", async () => {
-	const binding = defineZodSchema(z.date(), {
-		serialization: {
-			serialize: (date) => date.toISOString(),
-			deserialize: (json) => new Date(z.string().parse(json)),
-		},
-	});
-	const extension = extensionFor({ date: binding });
-	const codec = extension.descriptor.factory(
-		extension.column("date").typeParams,
-	)();
-	const date = new Date("2026-01-01T00:00:00Z");
-	expect(codec.decodeJson(codec.encodeJson(date))).toEqual(date);
-	await expect(
-		codec.decode(JSON.parse(await codec.encode(date))),
-	).resolves.toEqual(date);
-});
-
 it("keeps emitter callbacks bound and resolves both type-map positions", () => {
 	const { extension } = setup(z.string().transform(Number));
 	const { factory, renderInputType, renderOutputType } = extension.descriptor;
@@ -137,28 +119,10 @@ it("accepts Zod codecs without reversing their transformations", async () => {
 	await expect(codec.decode("12")).resolves.toBe(12);
 });
 
-it("rejects a serializer whose stored value fails validation", async () => {
-	const binding = defineZodSchema(z.number().positive(), {
-		serialization: {
-			serialize: () => -1,
-			deserialize: (value) => z.number().parse(value),
-		},
-	});
-	const extension = extensionFor({ value: binding });
-	const codec = extension.descriptor.factory(
-		extension.column("value").typeParams,
-	)();
-	await expect(codec.encode(2)).rejects.toThrow();
-	expect(() => codec.encodeJson(2)).toThrow();
-});
-
-it("preserves explicit undefined object fields", async () => {
-	const { codec } = setup(
-		z.unknown().refine((v) => Object.hasOwn(v as object, "a")),
-	);
+it("omits undefined object fields using native JSON semantics", async () => {
+	const { codec } = setup(z.object({ a: z.string().optional() }));
 	const value = { a: undefined };
-	expect(
-		await codec.decode(JSON.parse(await codec.encode(value))),
-	).toStrictEqual(value);
-	expect(codec.decodeJson(codec.encodeJson(value))).toStrictEqual(value);
+	expect(await codec.encode(value)).toBe("{}");
+	expect(codec.encodeJson(value)).toBe(value);
+	expect(await codec.decode({})).toStrictEqual({});
 });
