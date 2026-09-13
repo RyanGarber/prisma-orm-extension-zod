@@ -32,6 +32,7 @@ it("delegates native storage unchanged and never guesses types in unknown data",
 		await codec.decode(JSON.parse(await codec.encode(value))),
 	).toStrictEqual(JSON.parse(JSON.stringify(value)));
 	const cycle: Record<string, unknown> = {};
+	// biome-ignore lint/complexity/useLiteralKeys: index signature
 	cycle["self"] = cycle;
 	await expect(codec.encode(cycle)).rejects.toThrow();
 	await expect(codec.encode(1n)).rejects.toThrow();

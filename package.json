@@ -1,6 +1,6 @@
 {
 	"name": "@ryangarber/prisma-orm-extension-zod",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "Support for Zod types and validation in Prisma 8.",
 	"type": "module",
 	"sideEffects": false,
@@ -40,8 +40,8 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.12",
-		"@prisma/orm-postgres": "8.0.0-rc.8",
-		"@prisma/orm-toolchain": "8.0.0-rc.8",
+		"@prisma/orm-postgres": "8.0.0-rc.9",
+		"@prisma/orm-toolchain": "8.0.0-rc.9",
 		"@types/node": "^22.20.2",
 		"bumpp": "^12.3.0",
 		"temporal-zod": "0.7.0",
