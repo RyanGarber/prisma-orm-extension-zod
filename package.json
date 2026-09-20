@@ -55,6 +55,6 @@
 		"zod": "^4.6.5"
 	},
 	"peerDependencies": {
-		"@prisma/orm-postgres": "8.0.0-rc.10"
+		"@prisma/orm-postgres": "8.0.0-rc.11"
 	}
 }
