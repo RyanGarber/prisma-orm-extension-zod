@@ -1,6 +1,6 @@
 {
 	"name": "@ryangarber/prisma-orm-extension-zod",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"description": "Support for Zod types and validation in Prisma 8.",
 	"type": "module",
 	"sideEffects": false,
@@ -39,20 +39,20 @@
 		"release": "bumpp --commit --push --tag && pnpm publish"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.12",
-		"@prisma/orm-postgres": "8.0.0-rc.10",
-		"@prisma/orm-toolchain": "8.0.0-rc.10",
-		"@types/node": "^22.20.2",
+		"@biomejs/biome": "^2.5.14",
+		"@prisma/orm-postgres": "8.0.0-rc.11",
+		"@prisma/orm-toolchain": "8.0.0-rc.11",
+		"@types/node": "^26.6.2",
 		"bumpp": "^12.3.0",
 		"temporal-zod": "0.7.0",
 		"tsdown": "^0.23.0",
 		"typescript": "^7.0.2",
-		"vitest": "^5.0.0"
+		"vitest": "^5.0.1"
 	},
 	"packageManager": "pnpm@12.3.4+sha512.961aa41fb077da3a04a441d9f8e15ebc0c96da8ef710b2eb67bf9ee7cb0610eabd48f1fd85f51cffe73846785fa0f87c56a3a872a1d893f8446741b5cce45457",
 	"dependencies": {
 		"ponyfill-temporal": "0.1.0",
-		"zod": "^4.6.1"
+		"zod": "^4.6.5"
 	},
 	"peerDependencies": {
 		"@prisma/orm-postgres": "8.0.0-rc.10"
