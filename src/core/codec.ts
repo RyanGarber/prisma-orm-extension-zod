@@ -3,6 +3,7 @@ import type { JsonValue } from "@prisma/orm-postgres/contract/types";
 import type { ProjectionExpr } from "@prisma/orm-postgres/relational-core/ast";
 import { PostgresCodecDescriptor } from "@prisma/orm-postgres/target/codec-descriptor";
 import { postgresCodecRegistry } from "@prisma/orm-postgres/target/codecs";
+import { pgJsonb } from "@prisma/orm-postgres/target/data-types";
 import { z } from "zod";
 import {
 	type $ZodType,
@@ -59,6 +60,7 @@ export class ZodCodec<S extends $ZodType> extends CodecImpl<
 }
 
 export class ZodDescriptor extends PostgresCodecDescriptor<ZodTypeParams> {
+	override readonly dataType = pgJsonb.id;
 	override readonly codecId = ZOD_CODEC_ID;
 	override readonly traits = ["equality"] as const;
 	override readonly targetTypes = [ZOD_NATIVE_TYPE];

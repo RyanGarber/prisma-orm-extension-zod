@@ -47,7 +47,7 @@ it.skipIf(!databaseUrl)(
 		try {
 			await writeFile(
 				join(directory, "contract.prisma"),
-				`
+				`// use prisma-8
 types {
   ProfileJson = zod.Json("Profile")
 }
@@ -70,7 +70,6 @@ namespace ${schema} {
 					extensions: [extension.control],
 				}),
 				cwd: process.cwd(),
-				configPath: join(process.cwd(), "prisma.config.ts"),
 			});
 			const contract = JSON.parse(await readFile(result.files.json, "utf8"));
 			expect(

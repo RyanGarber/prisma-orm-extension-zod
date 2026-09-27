@@ -38,7 +38,7 @@ it.each(["ts", "prisma"])(
 		try {
 			await writeFile(
 				join(directory, "contract.prisma"),
-				`
+				`// use prisma-8
 model User {
   id String @id @default(uuid())
   profile zod.Json("Profile")
@@ -61,7 +61,6 @@ model User {
 								},
 							},
 				cwd: process.cwd(),
-				configPath: join(process.cwd(), "prisma.config.ts"),
 			});
 			const dts = (await readFile(result.files.dts, "utf8"))
 				.replaceAll("'", '"')
@@ -142,7 +141,7 @@ it.each([
 	try {
 		await writeFile(
 			join(directory, "contract.prisma"),
-			`
+			`// use prisma-8
 types {
   ProfileJson = zod.Json("Profile")
 }
@@ -159,7 +158,6 @@ model User {
 				extensions: [extension.control],
 			}),
 			cwd: process.cwd(),
-			configPath: join(process.cwd(), "prisma.config.ts"),
 		});
 		if (!valid) {
 			await expect(emission).rejects.toThrow();

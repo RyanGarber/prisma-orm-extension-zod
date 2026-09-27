@@ -1,10 +1,10 @@
 # Prisma 8 Zod extension
 
-Zod 4 validation and separate write/read types for PostgreSQL `jsonb` columns, based on Prisma's official Arktype extension. Requires `@prisma/orm-postgres@8.0.0-rc.11`.
+Zod 4 validation and separate write/read types for PostgreSQL `jsonb` columns, based on Prisma's official Arktype extension. Requires `@prisma/orm-postgres@8.0.0-rc.12`.
 
 ```sh
-pnpm add @ryangarber/prisma-orm-extension-zod zod @prisma/orm-postgres@8.0.0-rc.11
-pnpm add -D @prisma/orm-toolchain@8.0.0-rc.11
+pnpm add @ryangarber/prisma-orm-extension-zod zod @prisma/orm-postgres@8.0.0-rc.12
+pnpm add -D @prisma/orm-toolchain@8.0.0-rc.12
 ```
 
 ## Define schemas and register the extension
@@ -35,10 +35,10 @@ export const zodExtension = createZodExtension(schemas, {
 Register all schemas in one extension instance, using identifier-shaped keys. Share this module between authoring, control, and runtime. `module` and `export` identify the exported **type map**, not a schema value. Derive that map from the same schema record with `CodecTypes<typeof schemas>`; a mismatched hand-written map can make generated types incorrect. Prisma imports it through its supported type-import mechanism; inline import expressions in codec renderers are rejected by Prisma 8.
 ## Prisma DSL contract
 
-Use `zod.Json("Profile")` in a `.prisma` contract. The string names a schema registered in `createZodExtension`; the extension supplies its type-map module and export automatically.
+Use `zod.Json("Profile")` in a `.prisma` contract. The file must start with `// use prisma-8`. The string names a schema registered in `createZodExtension`; the extension supplies its type-map module and export automatically.
 
 ```prisma
-// contract.prisma
+// use prisma-8
 model User {
   id      String @id @default(uuid())
   profile zod.Json("Profile")
