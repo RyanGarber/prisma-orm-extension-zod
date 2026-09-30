@@ -1,10 +1,10 @@
 # Prisma 8 Zod extension
 
-Zod 4 validation and separate write/read types for PostgreSQL `jsonb` columns, based on Prisma's official Arktype extension. Requires `@prisma/orm-postgres@8.0.0-rc.12`.
+Zod 4 validation and separate write/read types for PostgreSQL `jsonb` columns, based on Prisma's official Arktype extension. Requires `@prisma/orm-postgres@8.0.0-rc.13`.
 
 ```sh
-pnpm add @ryangarber/prisma-orm-extension-zod zod @prisma/orm-postgres@8.0.0-rc.12
-pnpm add -D @prisma/orm-toolchain@8.0.0-rc.12
+pnpm add @ryangarber/prisma-orm-extension-zod zod @prisma/orm-postgres@8.0.0-rc.13
+pnpm add -D @prisma/orm-toolchain@8.0.0-rc.13
 ```
 
 ## Define schemas and register the extension

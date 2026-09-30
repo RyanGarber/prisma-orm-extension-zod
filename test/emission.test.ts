@@ -56,7 +56,10 @@ model User {
 						: {
 								...config,
 								contract: {
-									source: { load: async () => ok(contract) },
+									source: {
+										format: "typescript",
+										load: async () => ok(contract),
+									},
 									output: join(directory, "contract.json"),
 								},
 							},
@@ -147,7 +150,7 @@ types {
 }
 model User {
   id String @id
-  profile ${fieldType}
+  profile ${fieldType} @default(sql\`{}\`)
   @@map("users")
 }
 `,
