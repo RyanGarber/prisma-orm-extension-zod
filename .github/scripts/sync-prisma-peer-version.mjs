@@ -17,8 +17,21 @@ if (postgresVersion !== toolchainVersion) {
 }
 
 if (packageJson.peerDependencies?.["@prisma/orm-postgres"] !== postgresVersion) {
+  const oldVersion = packageJson.peerDependencies?.["@prisma/orm-postgres"];
+  
   packageJson.peerDependencies ??= {};
   packageJson.peerDependencies["@prisma/orm-postgres"] = postgresVersion;
   const indent = /^\t/m.test(source) ? "\t" : "  ";
   writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, indent)}\n`);
+
+  if (oldVersion) {
+    const readmePath = new URL("../../README.md", import.meta.url);
+    const readme = readFileSync(readmePath, "utf8");
+    const newReadme = readme.replaceAll(
+      oldVersion,
+      postgresVersion,
+    );
+    writeFileSync(readmePath, newReadme);
+    console.log(`Updated README.md to use @prisma/orm-postgres@${postgresVersion}.`);
+  }
 }
