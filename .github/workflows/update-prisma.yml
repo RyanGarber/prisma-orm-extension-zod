@@ -1,0 +1,54 @@
+name: update Prisma dependencies
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-prisma-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  update-prisma:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4.0.0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - name: Update Prisma packages
+        run: pnpm update --latest @prisma/orm-postgres @prisma/orm-toolchain
+
+      - name: Keep the Prisma peer dependency aligned
+        run: node .github/scripts/sync-prisma-peer-version.mjs
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Verify package
+        run: pnpm prepublishOnly
+
+      - name: Create or update pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/update-prisma
+          delete-branch: true
+          commit-message: "chore(deps): update Prisma packages"
+          title: "chore(deps): update Prisma packages"
+          body: |
+            Updates the Prisma ORM packages to their latest versions and keeps the peer dependency aligned.
+
+            The package validation suite passed before this PR was created.
