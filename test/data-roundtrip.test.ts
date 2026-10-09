@@ -29,15 +29,13 @@ it.each(["2026-09-12T13:45:30.123456789", "2024-02-29T00:00:00"])(
 			for (const value of [iso, date]) {
 				const input = schema === zPlainDateTime ? value : { dates: [value] };
 				const expected = schema.parse(input);
-				expect(
-					await codec.decode(JSON.parse(await codec.encode(input))),
-				).toEqual(expected);
+				expect(await codec.decode(await codec.encode(input))).toEqual(expected);
 				expect(codec.decodeJson(codec.encodeJson(input))).toEqual(expected);
 			}
 		}
 		expect(
 			await codecFor(zPlainDateTimeInstance).decode(
-				JSON.parse(await codecFor(zPlainDateTimeInstance).encode(date)),
+				await codecFor(zPlainDateTimeInstance).encode(date),
 			),
 		).toEqual(date);
 	},

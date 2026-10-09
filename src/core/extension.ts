@@ -118,7 +118,6 @@ export function createZodExtension<
 					),
 				ZOD_CODEC_ID,
 				{ key, module: reference.module, export: reference.export },
-				ZOD_NATIVE_TYPE,
 			);
 		},
 	};

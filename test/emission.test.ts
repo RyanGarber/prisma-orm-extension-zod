@@ -175,7 +175,7 @@ model User {
 		const params = contract.storage.types[column.typeRef].typeParams;
 		expect(params).toEqual(extension.column("Profile").typeParams);
 		const codec = extension.descriptor.factory(params)();
-		await expect(codec.decode({ name: "Ada", age: "36" })).resolves.toEqual({
+		await expect(codec.decode('{"name":"Ada","age":"36"}')).resolves.toEqual({
 			name: "Ada",
 			age: 36,
 		});

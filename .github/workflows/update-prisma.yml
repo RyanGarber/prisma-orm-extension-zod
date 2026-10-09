@@ -48,8 +48,8 @@ jobs:
       - name: Update Prisma packages
         run: pnpm update --latest @prisma/orm-postgres @prisma/orm-toolchain
 
-      - name: Keep the Prisma peer dependency aligned
-        run: node .github/scripts/sync-prisma-peer-version.mjs
+      - name: Sync package versions
+        run: node .github/scripts/sync-version.mjs
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile

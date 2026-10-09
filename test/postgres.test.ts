@@ -74,8 +74,8 @@ namespace ${schema} {
 			const contract = JSON.parse(await readFile(result.files.json, "utf8"));
 			expect(
 				contract.storage.namespaces[schema].entries.table.users.columns.profile
-					.nativeType,
-			).toBe("jsonb");
+					.dataType,
+			).toBe("pg/jsonb");
 			sql(
 				`CREATE SCHEMA "${schema}"; CREATE TABLE "${schema}".users (id text PRIMARY KEY, profile jsonb NOT NULL, optional jsonb, data jsonb, "dateTime" jsonb, date jsonb);`,
 			);

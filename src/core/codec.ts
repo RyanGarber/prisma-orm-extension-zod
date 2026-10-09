@@ -32,7 +32,7 @@ export type ZodTypeParams = {
 export class ZodCodec<S extends $ZodType> extends CodecImpl<
 	typeof ZOD_CODEC_ID,
 	readonly ["equality"],
-	JsonValue,
+	string | JsonValue,
 	unknown
 > {
 	constructor(
@@ -47,7 +47,8 @@ export class ZodCodec<S extends $ZodType> extends CodecImpl<
 		await parseAsync(this.binding.schema, value);
 		return jsonb.encode(value, {}) as Promise<string>;
 	}
-	async decode(value: JsonValue): Promise<output<S>> {
+	async decode(wire: string | JsonValue): Promise<output<S>> {
+		const value = await jsonb.decode(wire, {});
 		return parseAsync(this.readSchema, value) as Promise<output<S>>;
 	}
 	encodeJson(value: input<S>): JsonValue {
@@ -63,7 +64,6 @@ export class ZodDescriptor extends PostgresCodecDescriptor<ZodTypeParams> {
 	override readonly dataType = pgJsonb.id;
 	override readonly codecId = ZOD_CODEC_ID;
 	override readonly traits = ["equality"] as const;
-	override readonly targetTypes = [ZOD_NATIVE_TYPE];
 	override readonly paramsSchema = z.object({
 		key: z.string(),
 		module: z.string(),
@@ -77,9 +77,6 @@ export class ZodDescriptor extends PostgresCodecDescriptor<ZodTypeParams> {
 		},
 	) {
 		super();
-	}
-	protected override nativeType() {
-		return ZOD_NATIVE_TYPE;
 	}
 	protected override jsonProjection(expression: ProjectionExpr) {
 		return expression;
